@@ -19,21 +19,115 @@ function test_update(i){
     console.log("same data",i);
 }
 
-function test_insert(i){
-    console.log("new data",i)
+app.post('/', function(req, res) {
+
+function test_insert(num,obj){
+    var sql = 'INSERT INTO users_events_checkpoint SET ?'
+    var data = {
+                    "Tagdata" : obj[num-1].Tag_id, 
+                    "time_lapse" : obj[num-1].last_time,
+                    "Reader_id" : obj[num-1].Reader
+                }
+        con.query(sql, data, function(err, result){
+            if(!err && res.statusCode == 200) {
+                //res.status(201);
+                //res.send('Data Create Successful');
+                console.log("Insert new data Success");
+            } else {
+                //res.status(404);
+                //res.send('Not Found');
+                console.log("Insert new data Failed");
+            }
+        });
 }
 
-app.post('/', function(req, res) {
+function test_select(num,obj,tag,callback){
+    var sql = "SELECT * FROM users_events_checkpoint WHERE Tagdata='"+tag+"'";
+    var data = {
+                    "Tagdata" : obj[num].Tag_id, 
+                    "time_lapse" : obj[num].last_time,
+                    "Reader_id" : obj[num].Reader
+                }
+        con.query(sql, data, function(err, result){
+            if (err) 
+                callback(err,null);
+            else
+                callback(null,result.length);
+        });
+        //return 0
+}
+
     var fs = require('fs');
+    //var length = []
     var obj = JSON.parse(fs.readFileSync(__dirname + '/logger.json', 'utf8'));
-    //var jsondata = obj;
+    var jsondata;
+
+    var interval = 2 * 1000; // 2 seconds;
     var num = 0;
     for(var i=0; i< obj.length; i++){
-        var tag = obj[i].Tag_id;
-        console.log(tag);
-        var sql = "SELECT * FROM users_events_checkpoint WHERE Tagdata='"+tag+"'";
+        //var tag = obj[i].Tag_id;
+        //console.log(tag);
+            //var sql = "SELECT * FROM users_events_checkpoint WHERE Tagdata='"+tag[i]+"'";
+        //test_select(i,obj,tag);
+        setTimeout(function(i) { test_select(i,obj,obj[i].Tag_id, function(err,data){
+            num = num+1
+            if(data > 0){
+                console.log("same",num)
+            }else{
+                console.log("new",num)
+                test_insert(num,obj)
+            }});}, interval * i, i);
+            /*con.query(sql, function(err, result) {
+                console.log(result);
+                num = num+1;
+                if(result.length == 0){
+                    //console.log("insert_new")
+                    //setTimeout(function() { alert(“Test”); }, 1000);
+                    setTimeout(function() { test_insert(num,obj);}, 1000);
+                }else{
+                    console.log("same")
+                }*/
+                //console.log(num,result.length);
+                /*if(result.length > 0){
+                    var same = 0;
+                    var new_tag = 0;
+                    for(var i=0; i< result.length; i++){
+                        if(result[i].Reader_id == obj[num-1].Reader){
+                                same = same+1;
+                                //console.log("same");
+                            }else{
+                                //console.log("new tag");
+                                new_tag = new_tag+1;
+                            }
+                    }
+                    console.log(same,new_tag);
+                }else{
+                    console.log("new");
+                    //console.log("insert_new")
+                    //test_insert(num)
+                    /*sql = 'INSERT INTO users_events_checkpoint SET ?'
+                    var data = {
+                                    "Tagdata" : obj[num-1].Tag_id, 
+                                    "time_lapse" : obj[num-1].last_time,
+                                    "Reader_id" : obj[num-1].Reader
+                                }
+                        con.query(sql, data, function(err, result){
+                            if(!err && res.statusCode == 200) {
+                                //res.status(201);
+                                //res.send('Data Create Successful');
+                                console.log("Insert new data Success");
+                            } else {
+                                //res.status(404);
+                                //res.send('Not Found');
+                                console.log("Insert new data Failed");
+                            }
+                        });
+                }*/
+            //});
+    }  
+        //var sql = "SELECT * FROM users_events_checkpoint WHERE Tagdata='"+tag+"'";
         //console.log(obj[i].Tag_id)
-            con.query(sql, function(err, result) {
+            /*con.query(sql, function(err, result) {
                 var same = 0;
                 var new_tag = 0;
                 //console.log(result);
@@ -55,12 +149,12 @@ app.post('/', function(req, res) {
                             console.log("update");
                         }else if(new_tag == 1){
                             console.log("insert");
-                        }*/
+                        }
                     }
                     //console.log(same,new_tag)
                     if(same == 1 || same == new_tag){
                         //console.log("update");
-                        sql = "UPDATE users_events_checkpoint SET time_lapse = ? WHERE Tagdata = ?";
+                        /*sql = "UPDATE users_events_checkpoint SET time_lapse = ? WHERE Tagdata = ?";
                             con.query(sql, [obj[num-1].last_time,obj[num-1].Tag_id], function(err, result){
                                 if (!err && res.statusCode == 200){
                                     //res.status(200);
@@ -74,7 +168,7 @@ app.post('/', function(req, res) {
                             });
                     }else if(new_tag == 1){
                         //console.log("insert");
-                        sql = 'INSERT INTO users_events_checkpoint SET ?'
+                        /*sql = 'INSERT INTO users_events_checkpoint SET ?'
                         var data = {
                                         "Tagdata" : obj[num-1].Tag_id, 
                                         "time_lapse" : obj[num-1].last_time,
@@ -95,8 +189,8 @@ app.post('/', function(req, res) {
 
                 }else{
                     //console.log("insert_new")
-                //test_insert(num)
-                    sql = 'INSERT INTO users_events_checkpoint SET ?'
+                    //test_insert(num)
+                    /*sql = 'INSERT INTO users_events_checkpoint SET ?'
                     var data = {
                                     "Tagdata" : obj[num-1].Tag_id, 
                                     "time_lapse" : obj[num-1].last_time,
@@ -115,8 +209,8 @@ app.post('/', function(req, res) {
                         });
                 //console.log(data);
                 }
-            });
-    }
+            });*/
+    //}
     //console.log(update_check);
     res.json(obj);
 });
