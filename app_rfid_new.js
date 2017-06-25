@@ -273,6 +273,6 @@ app.delete('/delete/:Tagdata', function(req, res) {
     });
 });
 
-app.listen(port, function() {
-    console.log('Starting node.js on port ' + port);
-});
+// app.listen(port, function() {
+    // console.log('Starting node.js on port ' + port);
+// });
