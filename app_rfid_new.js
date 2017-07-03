@@ -15,11 +15,23 @@ var bodyParser = require('body-parser');
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
-function test_update(i){
-    console.log("same data",i);
-}
-
 app.post('/', function(req, res) {
+
+function test_update(num,obj){
+    //console.log(obj[num-1]);
+    var sql = "UPDATE users_events_checkpoint SET time_lapse = ? WHERE Tagdata = ?";
+        con.query(sql, [obj[num-1].last_time,obj[num-1].Tag_id], function(err, result){
+            if (!err && res.statusCode == 200){
+                res.status(200);
+                res.send('Data Update Successful');
+                console.log("Update Success");
+            } else {
+                res.status(404);
+                res.send('Error');
+                console.log("Update Failed");
+            }
+        });
+}
 
 function test_insert(num,obj){
     var sql = 'INSERT INTO users_events_checkpoint SET ?'
@@ -30,39 +42,56 @@ function test_insert(num,obj){
                 }
         con.query(sql, data, function(err, result){
             if(!err && res.statusCode == 200) {
-                //res.status(201);
-                //res.send('Data Create Successful');
+                res.status(201);
+                res.send('Data Create Successful');
                 console.log("Insert new data Success");
             } else {
-                //res.status(404);
-                //res.send('Not Found');
+                res.status(404);
+                res.send('Not Found');
                 console.log("Insert new data Failed");
+            }
+        });
+}
+
+function test_insert_reader(num,obj){
+    var sql = 'INSERT INTO users_events_checkpoint SET ?'
+    //console.log(obj[num-1])
+    var data = {
+                    "Tagdata" : obj[num-1].Tag_id, 
+                    "time_lapse" : obj[num-1].last_time,
+                    "Reader_id" : obj[num-1].Reader
+                }
+        con.query(sql, data, function(err, result){
+            if(!err && res.statusCode == 200) {
+                res.status(201);
+                res.send('Data Create Successful');
+                console.log("Insert new reader Success");
+            } else {
+                res.status(404);
+                res.send('Not Found');
+                console.log("Insert new reader Failed");
             }
         });
 }
 
 function test_select(num,obj,tag,callback){
     var sql = "SELECT * FROM users_events_checkpoint WHERE Tagdata='"+tag+"'";
-    var data = {
-                    "Tagdata" : obj[num].Tag_id, 
-                    "time_lapse" : obj[num].last_time,
-                    "Reader_id" : obj[num].Reader
-                }
-        con.query(sql, data, function(err, result){
+    //console.log(sql)
+        con.query(sql, function(err, result){
             if (err) 
                 callback(err,null);
             else
-                callback(null,result.length);
+                callback(null,result);
         });
         //return 0
 }
 
     var fs = require('fs');
     //var length = []
-    var obj = JSON.parse(fs.readFileSync(__dirname + '/logger.json', 'utf8'));
-    var jsondata;
+    var obj = req.body.slice()
+    //var jsondata = JSON.parse(fs.readFileSync(__dirname + '/logger.json', 'utf8'));
 
-    var interval = 2 * 1000; // 2 seconds;
+    var interval = 500; // 2 seconds;
     var num = 0;
     for(var i=0; i< obj.length; i++){
         //var tag = obj[i].Tag_id;
@@ -71,8 +100,26 @@ function test_select(num,obj,tag,callback){
         //test_select(i,obj,tag);
         setTimeout(function(i) { test_select(i,obj,obj[i].Tag_id, function(err,data){
             num = num+1
-            if(data > 0){
-                console.log("same",num)
+            if(data.length > 0){
+                var same = 0;
+                var new_tag = 0;
+                for(var i=0; i< data.length; i++){
+                    if(data[i].Reader_id == obj[num-1].Reader){
+                        same = same+1;
+                        //console.log("same");
+                    }else{
+                        //console.log("new tag");
+                        new_tag = new_tag+1;
+                    }
+                }
+                console.log(same,new_tag)
+                if(same == 1){
+                    console.log("same reader")
+                    test_update(num,obj)
+                }else{
+                    console.log("new reader")
+                    test_insert_reader(num,obj)
+                }
             }else{
                 console.log("new",num)
                 test_insert(num,obj)
@@ -212,7 +259,7 @@ function test_select(num,obj,tag,callback){
             });*/
     //}
     //console.log(update_check);
-    res.json(obj);
+    //res.json(obj);
 });
 
 app.get('/select/:Tagdata', function(req, res) {
@@ -273,6 +320,6 @@ app.delete('/delete/:Tagdata', function(req, res) {
     });
 });
 
-// app.listen(port, function() {
-    // console.log('Starting node.js on port ' + port);
-// });
+app.listen(port, function() {
+    console.log('Starting node.js on port ' + port);
+});
