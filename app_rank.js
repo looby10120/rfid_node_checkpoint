@@ -3,6 +3,7 @@ var port = process.env.PORT || 7777;
 var mysql =  require('mysql');
 var path = require('path');
 var dateFormat = require('dateformat');
+var Promise = require('promise');
 var con = mysql.createConnection({
         host: "localhost",
         user: "root",
@@ -236,10 +237,11 @@ app.get('/select/:Tagdata', function(req, res) {
     });
 });
 
-app.get('/select_rank', function(req, res) {
+app.post('/select_rank', function(req, res) {
 
-function overall_rank(tag) {
+function overall_rank(tag, callback) {
     var sql =   "SET @rank=0;"
+    return new Promise((resolve, reject) => {
         con.query(sql, function(err, result) {
             if (!err && res.statusCode == 200){
                 //res.status(200);
@@ -247,14 +249,15 @@ function overall_rank(tag) {
                         "FROM result "+
                         "WHERE running_type_id > 1 "+
                         "ORDER BY total_time ASC";
-                console.log(sql)
+                //console.log(sql)
                 con.query(sql, function(err, result) {
                     if (!err && res.statusCode == 200){
                         console.log("ok")
                         //console.log(result)
                         for(var i=0; i< result.length; i++){
                             if(result[i].Tagdata == tag){
-                                console.log(result[i])
+                                //console.log(result[i])
+                                callback(null, result[i])
                             }
                         }
                         res.json(result)
@@ -269,25 +272,99 @@ function overall_rank(tag) {
                 res.send('Not Found');
             }
             //res.send('OK');
-            //console.log(res.statusCode,res.statusMessage)
+            console.log(res.statusCode,res.statusMessage,"Finish overall_rank")
         });
+    });
 }
-    var tag = "E20000167411019422503018D36300"
-    overall_rank(tag);
 
-/*function gender_rank(s) {
+function gender_rank(tag, running_id, callback) {
+    if(running_id >= 2 && running_id <= 8){
+        console.log("boy")
+        sql =   "SET @rank=0;"
+            con.query(sql, function(err, result) {
+                if (!err && res.statusCode == 200){
+                    //res.status(200);
+                    sql =   "SELECT @rank:=@rank+1 AS rank, Tagdata, running_type_id, total_time "+
+                            "FROM result "+
+                            "WHERE running_type_id >= 2 && running_type_id <= 8 "+
+                            "ORDER BY total_time ASC";
+                    con.query(sql, function(err, result) {
+                        if (!err && res.statusCode == 200){
+                            console.log("ok")
+                            //console.log(result)
+                            for(var i=0; i< result.length; i++){
+                                if(result[i].Tagdata == tag){
+                                    //console.log(result[i])
+                                    callback(null, result[i])
+                                }
+                            }
+                            //res.json(result)
+                        }else{
+                            console.log("error")
+                        }
+                    });
+                } else {
+                    //throw err
+                    //res.status(404);
+                    res.send('Not Found');
+                }
+            });
+    }else if(running_id >= 9 && running_id <= 14){
+        console.log("girl")
+        sql =   "SET @rank=0;"
+            con.query(sql, function(err, result) {
+                if (!err && res.statusCode == 200){
+                    //res.status(200);
+                    sql =   "SELECT @rank:=@rank+1 AS rank, Tagdata, running_type_id, total_time "+
+                            "FROM result "+
+                            "WHERE running_type_id >= 9 && running_type_id <= 14 "+
+                            "ORDER BY total_time ASC";
+                    con.query(sql, function(err, result) {
+                        if (!err && res.statusCode == 200){
+                            console.log("ok")
+                            //console.log(result)
+                            //res.json(result)
+                            for(var i=0; i< result.length; i++){
+                                if(result[i].Tagdata == tag){
+                                    //console.log(result[i])
+                                    callback(null, result[i])
+                                }
+                            }
+                        }else{
+                            console.log("error")
+                        }
+                    });
+                } else {
+                    //throw err
+                    //res.status(404);
+                    res.send('Not Found');
+                }
+            });
+    }
+    console.log(res.statusCode,res.statusMessage,"Finish gender_rank")
+}
+
+function age_rank(tag, running_id, callback) {
     var sql =   "SET @rank=0;"
         con.query(sql, function(err, result) {
             if (!err && res.statusCode == 200){
                 //res.status(200);
-                sql =   "SELECT @rank:=@rank+1 AS rank, running_type_id, total_time "+
+                console.log(running_id)
+                sql =   "SELECT @rank:=@rank+1 AS rank, Tagdata, running_type_id, total_time "+
                         "FROM result "+
-                        "WHERE running_type_id > 1 "+
+                        "WHERE running_type_id = '"+ running_id +"' "+
                         "ORDER BY total_time ASC";
+                console.log(sql)
                 con.query(sql, function(err, result) {
                     if (!err && res.statusCode == 200){
                         console.log("ok")
-                        console.log(result)
+                        //console.log(result)
+                        for(var i=0; i< result.length; i++){
+                            if(result[i].Tagdata == tag){
+                                //console.log(result[i])
+                                callback(null, result[i])
+                            }
+                        }
                         //res.json(result)
                     }else{
                         console.log("error")
@@ -304,34 +381,93 @@ function overall_rank(tag) {
         });
 }
 
-function age_rank(s) {
-    var sql =   "SET @rank=0;"
+function get_running_id(tag,callback) {
+    var sql = "SELECT running_type_id FROM result WHERE Tagdata='"+tag+"'";
         con.query(sql, function(err, result) {
-            if (!err && res.statusCode == 200){
-                //res.status(200);
-                sql =   "SELECT @rank:=@rank+1 AS rank, running_type_id, total_time "+
-                        "FROM result "+
-                        "WHERE running_type_id > 1 "+
-                        "ORDER BY total_time ASC";
-                con.query(sql, function(err, result) {
-                    if (!err && res.statusCode == 200){
-                        console.log("ok")
-                        console.log(result)
-                        //res.json(result)
-                    }else{
-                        console.log("error")
-                    }
+            if(err){
+                callback(err, null);
+            }else{
+                //console.log(result[0].running_type_id)
+                callback(null, result[0].running_type_id);
+            }
+        })
+}
+
+function get_runner_data(tag,callback) {
+    var sql =   "SELECT users_events_all.user_name,"+
+                "s_running_type.running_type,prefix_running_number, "+
+                "s_running_categories.running_cat_desc, "+
+                "users_events_tag.Tagdata, "+
+                "result.total_time "+
+                "FROM users_events_all "+
+                "LEFT JOIN s_running_type ON users_events_all.running_type_id = s_running_type.running_type_id "+
+                "LEFT JOIN s_running_categories ON users_events_all.running_cat_id = s_running_categories.running_cat_id "+
+                "LEFT JOIN users_events_tag ON users_events_all.txt_running_no = users_events_tag.running_no "+
+                "LEFT JOIN result ON result.Tagdata = users_events_tag.Tagdata "+
+                "WHERE users_events_tag.Tagdata LiKE '%"+ tag + "%'"
+        con.query(sql, function(err, result) {
+            if(err){
+                console.log("Error")
+                callback(err, null);
+            }else{
+                console.log(result)
+                callback(null, result[0]);
+            }
+        })
+}
+
+    var tag = req.body.Tagdata;
+    var rank = []
+    //console.log(running_id)
+    var running_id = get_running_id(tag, function(err, result){
+        var rank = []
+        var id = result
+        console.log(tag,id)
+        overall_rank(tag, function(err, result){
+            rank.push("Overall Rank : " + result.rank)
+            //console.log(rank, tag, id)
+            gender_rank(tag, id, function(err, result){
+                rank.push("Gender Overall Rank : " + result.rank)
+                //console.log(rank)
+                age_rank(tag, id, function(err, result){
+                    rank.push("Age Group Rank : " + result.rank)
+                    //console.log(rank)
+                    get_runner_data(tag, function(err, result){
+                        var runner_name = "Name : " + result.user_name
+                        if(result.running_type == "M"){
+                            var runner_gender = "Gender : Male"
+                        }else if(result.running_type == "F"){
+                            var runner_gender = "Gender : Female"
+                        }
+                        var age_group = "Age Group : " + result.prefix_running_number
+                        var race = "Race : " + result.running_cat_desc
+                        var officail_time = "Officail Time : " + result.total_time
+                        console.log(runner_name)
+                        console.log(runner_gender)
+                        console.log(age_group)
+                        console.log(race)
+                        console.log(officail_time)
+                        console.log(rank[0])
+                        console.log(rank[1])
+                        console.log(rank[2])
+                    });
                 });
-            }
-            else {
-                //throw err
-                //res.status(404);
-                res.send('Not Found');
-            }
-            //res.send('OK');
-            //console.log(res.statusCode,res.statusMessage)
+            });
         });
-}*/
+    });
+
+    //console.log(running_id)
+    //overall_rank(tag);
+    //gender_rank(tag);
+    //age_rank(tag);
+    /*var gen_rank = gender_rank(tag,function(err,data){
+        if(!err){
+            return data
+        }else{
+            return "Error"
+        }
+    });
+    console.log()*/
 
 });
 

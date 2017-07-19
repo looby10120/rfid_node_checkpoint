@@ -23,11 +23,11 @@ function test_update(num,obj){
         con.query(sql, [obj[num-1].last_time,obj[num-1].Tag_id], function(err, result){
             if (!err && res.statusCode == 200){
                 res.status(200);
-                res.send('Data Update Successful');
+                //res.send('Data Update Successful');
                 console.log("Update Success");
             } else {
                 res.status(404);
-                res.send('Error');
+                //res.send('Error');
                 console.log("Update Failed");
             }
         });
@@ -43,11 +43,11 @@ function test_insert(num,obj){
         con.query(sql, data, function(err, result){
             if(!err && res.statusCode == 200) {
                 res.status(201);
-                res.send('Data Create Successful');
+                //res.send('Data Create Successful');
                 console.log("Insert new data Success");
             } else {
                 res.status(404);
-                res.send('Not Found');
+                //res.send('Not Found');
                 console.log("Insert new data Failed");
             }
         });
@@ -64,11 +64,11 @@ function test_insert_reader(num,obj){
         con.query(sql, data, function(err, result){
             if(!err && res.statusCode == 200) {
                 res.status(201);
-                res.send('Data Create Successful');
+                //res.send('Data Create Successful');
                 console.log("Insert new reader Success");
             } else {
                 res.status(404);
-                res.send('Not Found');
+                //res.send('Not Found');
                 console.log("Insert new reader Failed");
             }
         });
@@ -76,7 +76,7 @@ function test_insert_reader(num,obj){
 
 function test_select(num,obj,tag,callback){
     var sql = "SELECT * FROM users_events_checkpoint WHERE Tagdata='"+tag+"'";
-    //console.log(sql)
+    console.log(sql)
         con.query(sql, function(err, result){
             if (err) 
                 callback(err,null);
@@ -88,7 +88,7 @@ function test_select(num,obj,tag,callback){
 
     var fs = require('fs');
     //var length = []
-    var obj = req.body.slice()
+    var obj = JSON.parse(fs.readFileSync(__dirname + '/logger.json', 'utf8'));//req.body.slice()
     //var jsondata = JSON.parse(fs.readFileSync(__dirname + '/logger.json', 'utf8'));
 
     var interval = 500; // 2 seconds;
@@ -115,14 +115,18 @@ function test_select(num,obj,tag,callback){
                 console.log(same,new_tag)
                 if(same == 1){
                     console.log("same reader")
-                    test_update(num,obj)
+                    //test_update(num,obj)
                 }else{
+                    if(obj[num-1].Reader == "Reader4"){
+                        console.log("last reader")
+                    }else{
                     console.log("new reader")
-                    test_insert_reader(num,obj)
+                    //test_insert_reader(num,obj)
+                    }
                 }
             }else{
                 console.log("new",num)
-                test_insert(num,obj)
+                //test_insert(num,obj)
             }});}, interval * i, i);
             /*con.query(sql, function(err, result) {
                 console.log(result);
@@ -259,7 +263,7 @@ function test_select(num,obj,tag,callback){
             });*/
     //}
     //console.log(update_check);
-    //res.json(obj);
+    res.json(obj);
 });
 
 app.get('/select/:Tagdata', function(req, res) {

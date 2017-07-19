@@ -65,7 +65,7 @@ app.post('/insert', function(req, res) {
 
         } else if (!err && res.statusCode == 200){
             console.log("Insert")
-            /*var data = { "event_id": id, "running_no": run_no, "Tagdata": tag }
+            var data = { "event_id": id, "running_no": run_no, "Tagdata": tag }
             sql = "INSERT INTO users_events_tag SET ?"
             con.query(sql, data, function(err, result){
                 if (!err && res.statusCode == 200) {
@@ -73,10 +73,10 @@ app.post('/insert', function(req, res) {
                     res.send('Data Create Successful');
                 } else {
                     res.status(404);
-                    res.send('Data Create Not Successful');
+                    res.send('Data Create Failed');
                     // throw err;
                 }
-            });*/
+            });
         } else {
             res.status(404);
             res.send('System Error');
@@ -91,7 +91,53 @@ app.post('/update', function(req, res) {
     var id = req.body.event_id;
     var run_no = req.body.running_no;
     var tag = req.body.Tagdata;
-    console.log(id,run_no,tag)
+    var sql = "SELECT * FROM users_events_tag WHERE running_no='" + run_no + "'";
+    //console.log(sql)
+    console.log(id,run_no,tag,"update")
+    if(run_no == undefined || tag == undefined || id == undefined){
+        res.status(404)
+        res.send("Missing Data")
+    } else {
+    con.query(sql, function(err, result) {
+        console.log(result)
+        if (run_no.length == 0 || tag.length == 0 || id.length == 0) {
+            res.status(204);
+            res.send('No Content');
+
+        } else if (result.length == 0) {
+            //console.log(result)
+            res.status(409);
+            res.send('No Content');
+
+        } else if (!err && res.statusCode == 200){
+            console.log("Update")
+            var data = { "event_id": id, "Tagdata" : tag }
+            sql = "UPDATE users_events_tag SET ? WHERE running_no=?"
+            con.query(sql, [data, run_no], function(err, result){
+                if (!err && res.statusCode == 200) {
+                    res.status(201);
+                    res.send('Data Update Successful');
+                } else {
+                    res.status(404);
+                    res.send('Data Update Failed');
+                    // throw err;
+                }
+            });
+        } else {
+            res.status(404);
+            res.send('System Error');
+            //throw err;
+        }
+        console.log(res.statusCode, res.statusMessage);
+    });
+    }
+});
+
+/*app.post('/update', function(req, res) {
+    var id = req.body.event_id;
+    var run_no = req.body.running_no;
+    var tag = req.body.Tagdata;
+    console.log(id,run_no,tag,"Update")
     if(run_no == undefined || tag == undefined || id == undefined){
         res.status(404)
         res.send("Missing Data")
@@ -117,13 +163,13 @@ app.post('/update', function(req, res) {
         }
         console.log(res.statusCode, res.statusMessage);
     }
-});
+});*/
 
 app.delete('/delete_match', function(req, res) {
-    var running_no = req.body.running_no;
-    var sql = "SELECT * FROM users_events_tag WHERE running_no LIKE '%"+ running_no + "%'";
+    var tag = req.body.Tagdata;
+    var sql = "SELECT * FROM users_events_tag WHERE Tagdata LIKE '%"+ tag + "%'";
     console.log(sql)
-    if(running_no == undefined){
+    if(tag == undefined){
         res.status(404)
         res.send("Error")
     }else{
@@ -136,7 +182,7 @@ app.delete('/delete_match', function(req, res) {
         }
         else if (!err && res.statusCode == 200){
             //res.json(result);
-            sql = "DELETE FROM users_events_tag WHERE running_no LIKE '%"+ running_no + "%'";
+            sql = "DELETE FROM users_events_tag WHERE Tagdata LIKE '%"+ tag + "%'";
             con.query(sql, function(err, result){
                 if (!err && res.statusCode == 200) {
                     res.status(200);
